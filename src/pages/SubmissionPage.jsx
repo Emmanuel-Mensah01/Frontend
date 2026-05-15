@@ -98,12 +98,14 @@ export default function SubmissionPage() {
         if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
       };
       mr.onstop = () => {
-        const mimeUsed = mr.mimeType || mimeType || 'audio/webm';
-        const blob = new Blob(chunksRef.current, { type: mimeUsed });
-        setAudioBlob(blob);
-        setAudioUrl(URL.createObjectURL(blob));
-        stream.getTracks().forEach((t) => t.stop());
-      };
+  const mimeUsed = mr.mimeType || 'audio/webm';
+  const blob = new Blob(chunksRef.current, { type: mimeUsed });
+  setAudioBlob(blob);
+  const reader = new FileReader();
+  reader.onloadend = () => setAudioUrl(reader.result);
+  reader.readAsDataURL(blob);
+  stream.getTracks().forEach((t) => t.stop());
+};
       mr.start(100);
       setRecording(true);
       setRecordingTime(0);

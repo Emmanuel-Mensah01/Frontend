@@ -79,20 +79,32 @@ export default function SubmissionPage() {
     verify();
   }, [paymentRef]);
 
+  const getMimeType = () => {
+    const types = ['audio/webm', 'audio/mp4', 'audio/ogg', 'audio/aac'];
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) return type;
+    }
+    return '';
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       chunksRef.current = [];
-      const mr = new MediaRecorder(stream);
+      const mimeType = getMimeType();
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mr;
-      mr.ondataavailable = (e) => chunksRef.current.push(e.data);
+      mr.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      };
       mr.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const mimeUsed = mr.mimeType || mimeType || 'audio/webm';
+        const blob = new Blob(chunksRef.current, { type: mimeUsed });
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach((t) => t.stop());
       };
-      mr.start();
+      mr.start(100);
       setRecording(true);
       setRecordingTime(0);
       timerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000);
@@ -109,6 +121,14 @@ export default function SubmissionPage() {
 
   const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
+  const getFileExtension = (blob) => {
+    if (!blob) return 'webm';
+    if (blob.type.includes('mp4')) return 'mp4';
+    if (blob.type.includes('ogg')) return 'ogg';
+    if (blob.type.includes('aac')) return 'aac';
+    return 'webm';
+  };
+
   const handleSubmit = async () => {
     if (mode === 'text' && !dreamText.trim()) return setError('Please describe your dream.');
     if (mode === 'audio' && !audioBlob) return setError('Please record your dream first.');
@@ -122,8 +142,12 @@ export default function SubmissionPage() {
       formData.append('type', mode);
       formData.append('paymentReference', paymentRef);
       formData.append('paymentAmount', '50');
-      if (mode === 'text') formData.append('textContent', dreamText);
-      else formData.append('audio', audioBlob, 'dream-recording.webm');
+      if (mode === 'text') {
+        formData.append('textContent', dreamText);
+      } else {
+        const ext = getFileExtension(audioBlob);
+        formData.append('audio', audioBlob, `dream-recording.${ext}`);
+      }
       const res = await api.post('/submissions', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -232,7 +256,7 @@ export default function SubmissionPage() {
         {mode === 'audio' && (
           <motion.div variants={fadeUp} initial="hidden" animate="show" custom={2}>
             <div className="card" style={{ textAlign: 'center', marginBottom: '1rem', padding: '2rem 1.5rem' }}>
-              {!audioUrl ? (
+              {!audioBlob ? (
                 <>
                   <button
                     onClick={recording ? stopRecording : startRecording}
@@ -277,8 +301,7 @@ export default function SubmissionPage() {
                       <path d="M20 6L9 17l-5-5" stroke="#32c878" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <p style={{ color: 'rgba(50,200,120,0.8)', fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', marginBottom: '1rem' }}>Dream recorded</p>
-                  <audio controls src={audioUrl} style={{ width: '100%', borderRadius: '0.75rem', marginBottom: '0.75rem' }} />
+                  <p style={{ color: 'rgba(50,200,120,0.8)', fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', marginBottom: '1rem' }}>Dream recorded ✓</p>
                   <button onClick={() => { setAudioBlob(null); setAudioUrl(''); setRecordingTime(0); }}
                     style={{ background: 'none', border: 'none', color: 'rgba(248,247,244,0.25)', fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                   >

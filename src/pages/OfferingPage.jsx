@@ -56,7 +56,7 @@ export default function OfferingPage() {
       }
     } catch (err) {
       // DEV FALLBACK — bypass payment if Paystack not configured
-      const isDev = import.meta.env.DEV;
+    const isDev = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
       if (isDev) {
         const devRef = `DEV-${Date.now()}`;
         navigate(`/submission?ref=${devRef}`);

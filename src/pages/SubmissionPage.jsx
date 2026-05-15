@@ -301,7 +301,10 @@ export default function SubmissionPage() {
                       <path d="M20 6L9 17l-5-5" stroke="#32c878" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <p style={{ color: 'rgba(50,200,120,0.8)', fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', marginBottom: '1rem' }}>Dream recorded ✓</p>
+                  <p style={{ color: 'rgba(50,200,120,0.8)', fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Dream recorded ✓</p>
+<p style={{ color: 'rgba(200,169,107,0.5)', fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem', marginBottom: '1rem' }}>
+  {formatTime(recordingTime)} recorded
+</p>
                   <button onClick={() => { setAudioBlob(null); setAudioUrl(''); setRecordingTime(0); }}
                     style={{ background: 'none', border: 'none', color: 'rgba(248,247,244,0.25)', fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                   >
